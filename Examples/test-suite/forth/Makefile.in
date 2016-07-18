@@ -33,8 +33,7 @@ run_testcase = \
 	./$< -gforth > $@ 
 
 %.4thx: %_wrap.c
-	echo "$(CC) $(INCLUDES) -o $@ $<"
-	$(CC) $(INCLUDES) -include stdlib.h -o $@ $<
+	$(CC) $(INCLUDES) -include swig_testcases.h -o $@ $<
 
 %.cpptest:
 	@exit 0
