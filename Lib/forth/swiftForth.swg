@@ -30,7 +30,7 @@
    is required, still we need the type information to defer constant types */
 
 #define SWIG_FORTH_SWIFTFORTH_PARAMETER			"%{c-name}"
-#define SWIG_FORTH_SWIFTFORTH_FUNCTION			"FUNCTION: %{c-name}"
+#define SWIG_FORTH_SWIFTFORTH_FUNCTION			"FUNCTION: %{c-name} ( %{inputs} -- %{output} )"
 #define SWIG_FORTH_SWIFTFORTH_COMMENT			"\\ %{value}"
 #define SWIG_FORTH_SWIFTFORTH_OUTPUT			"%{value}"
 
