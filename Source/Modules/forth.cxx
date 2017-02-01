@@ -104,8 +104,8 @@ class FORTH : public Language
 		void	printComment( File *file, const char *comment ); 
 		void	printComment( File *file, const String *comment ); 
 
-		String	*ParmList_str_forthargs( ParmList *node, const char *attr_name, String *structTemplate = NULL, const char *typemapName = "forth" );
-		String	*typeLookup( Node *node, String *structTemplate = NULL, const char *typemapName = "forth" );
+		String	*ParmList_str_forthargs( ParmList *node, const char *attr_name, String *typeTamplate = NULL, String *structTemplate = NULL, const char *typemapName = "forth" );
+		String	*typeLookup( Node *node, String *typeTemplate = NULL, String *structTemplate = NULL, const char *typemapName = "forth" );
 		String	*forthifyName( String *name );
 		String	*templateInstace( const char *name );
 
@@ -842,10 +842,12 @@ String *FORTH::functionWrapper(String *name, String *forthName, Node *type, Parm
 		*outputTemplate = NewStringf( "%s_OUTPUT", prefix ),
                 *structParameterTemplate = NewStringf( "%s_STRUCT_PARAMETER", prefix),
                 *structParameter = templateInstace( Char(structParameterTemplate) ),
+		*parameterTypeTemplate = NewStringf( "%s_PARAMETER", prefix ),
+		*parameterType = templateInstace( Char( parameterTypeTemplate ) ),
 		*typemapNameTemplate = NewStringf( "%s_TYPEMAP", prefix ),
 		*typemapName = templateInstace( Char( typemapNameTemplate ) ),
-		*returnType = typeLookup( type, NULL, Char( typemapName ) ),
-                *parmstr = ParmList_str_forthargs( parms, "type", structParameter, Char( typemapName ) ),
+		*returnType = typeLookup( type, NULL, NULL, Char( typemapName ) ),
+                *parmstr = ParmList_str_forthargs( parms, "type", parameterType, structParameter, Char( typemapName ) ),
 		*declaration = templateInstace( Char(functionTemplate) );
 
 	Replace( declaration, "%{c-name}", name, DOH_REPLACE_ANY );
@@ -877,6 +879,8 @@ String *FORTH::functionWrapper(String *name, String *forthName, Node *type, Parm
 	Delete( returnType );
 	Delete( typemapName );
 	Delete( typemapNameTemplate );
+        Delete( parameterType );
+        Delete( parameterTypeTemplate );
         Delete( structParameter );
         Delete( structParameterTemplate );
 	Delete( outputTemplate );
@@ -941,7 +945,7 @@ void	FORTH::printComment( File *file, const String *comment )
 	Printf( file, "\n\tswigComment(\"%s\");\n", comment );
 }
 
-String *FORTH::ParmList_str_forthargs( ParmList *node, const char *attr_name, String *structTemplate, const char *typemapName )
+String *FORTH::ParmList_str_forthargs( ParmList *node, const char *attr_name, String *typeTemplate, String *structTemplate, const char *typemapName )
 {
 	String *out = NewStringEmpty();
 	while( node )
@@ -950,8 +954,7 @@ String *FORTH::ParmList_str_forthargs( ParmList *node, const char *attr_name, St
 		
 		/* if type is requested, perform a lookup */
 		if(!strncmp(attr_name, "type", 4)) {
-			Printf( stdout, "TYPEMAPNAME: %s, %s\n", structTemplate, typemapName );
-			type = typeLookup( node, structTemplate, typemapName );
+			type = typeLookup( node, typeTemplate, structTemplate, typemapName );
                 }
 		else
 		{
@@ -976,11 +979,12 @@ String *FORTH::ParmList_str_forthargs( ParmList *node, const char *attr_name, St
 	return out;
 }
 
-String *FORTH::typeLookup( Node *node, String *structTemplate, const char *typemapName )
+String *FORTH::typeLookup( Node *node, String *typeTemplate, String *structTemplate, const char *typemapName )
 {
 	String		*typeName;
 	String		*resultType = NewString("");
-	String		*cTypeName = SwigType_str( Getattr( node, "type" ) , 0);
+	String		*cName		= Getattr( node, "name" );
+	String		*cTypeName	= SwigType_str( Getattr( node, "type" ) , 0);
 	bool		foundType;
 
 	/* Get return types */
@@ -1003,23 +1007,30 @@ String *FORTH::typeLookup( Node *node, String *structTemplate, const char *typem
 		foundType = true;
 	}
 
-	/* Type found, replace */
-	if( foundType )
-		Printf(resultType, "%s", typeName);
-	/* Variable Argument List found */
-	else if( ! Strcmp( cTypeName, "..." ) )
+	/* Type not found */
+	if( !foundType )
 	{
-		containsVariableArguments = true;
-		Swig_warning( WARN_FORTH_VARIABLE_ARGUMENTS, input_file, line_number, "Variable Argument List detected ( \"%s\" ), using \"%s\"\n", cTypeName, defaultVarArgType );
-		Printf( resultType, "%s", defaultVarArgType );
-	}
-	else
-	{
+		Delete( typeName );
+		/* Variable Argument List found */
+		if( ! Strcmp( cTypeName, "..." ) )
+		{
+			containsVariableArguments = true;
+			Swig_warning( WARN_FORTH_VARIABLE_ARGUMENTS, input_file, line_number, "Variable Argument List detected ( \"%s\" ), using \"%s\"\n", cTypeName, defaultVarArgType );
+			typeName = NewStringf( "%s", defaultVarArgType );
+		}
+		else
+		{
 
-		/* Type not found, emit default-type and display warning */
-		Printf( resultType, (char *)Data(defaultType) );
-		Swig_warning( WARN_FORTH_TYPEMAP_UNDEF, input_file, line_number, "No forth typemap defined for \"%s\", using \"%s\"\n", cTypeName, defaultType );
+			/* Type not found, emit default-type and display warning */
+			Swig_warning( WARN_FORTH_TYPEMAP_UNDEF, input_file, line_number, "No forth typemap defined for \"%s\", using \"%s\"\n", cTypeName, defaultType );
+			typeName = NewStringf( "%s", (char *)Data(defaultType) );
+		}
 	}
+
+	Printf(resultType, "%s", typeTemplate);
+	Replace( resultType, "%{c-type}", cTypeName, DOH_REPLACE_ANY );
+	Replace( resultType, "%{c-name}", cName, DOH_REPLACE_ANY );
+	Replace( resultType, "%{type}", typeName, DOH_REPLACE_ANY );
 
 	Delete( typeName );
 	Delete( cTypeName );

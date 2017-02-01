@@ -61,6 +61,7 @@
 #define SWIG_FORTH_TYPE_VARARGS						"..."
 
 /* common templates */
+#define SWIG_FORTH_STACKEFFECT_COMMENT	        "\t( %{arguments}%{spacer}-- )"
 %include "sections.swg"
 %include "structs.swg"
 
