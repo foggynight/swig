@@ -51,6 +51,8 @@ extern char* getCharP( void );
 extern float getFloat( void );
 extern float* getFloatP( void );
 
+extern char * manipulateString( char *one, char*two );
+
 extern int getInt( void );
 extern int getIntIndex( int index );
 extern int getIntVarArgs( int index, ... );

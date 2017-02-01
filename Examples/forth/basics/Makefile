@@ -19,8 +19,11 @@ debug-tree:
 run: $(OUTPUT).gforth.fs $(OUTPUT).swiftforth.fs $(OUTPUT).vfx.fs $(OUTPUT).fsi.fs
 	cat $(OUTPUT).gforth.fs $(OUTPUT).swiftforth.fs $(OUTPUT).vfx.fs $(OUTPUT).fsi.fs
 
-run-gforth: $(OUTPUT).gforth.fs
-	cat $(OUTPUT).gforth.fs
+run-gforth: $(OUTPUT).fs
+	./$(OUTPUT).fsx -gforth
+
+run-vfx: $(OUTPUT).fsx
+	./$(OUTPUT).fsx -vfx
 
 .PHONY: clean
 

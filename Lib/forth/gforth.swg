@@ -26,7 +26,7 @@
 
  *****************************************************************************/
 
-
+#define SWIG_FORTH_GFORTH_TYPEMAP		"forth"
 #define SWIG_FORTH_GFORTH_PARAMETER		"%{type}"
 #define SWIG_FORTH_GFORTH_STRUCT_PARAMETER	"a{*(%{c-name}*)}"
 #define SWIG_FORTH_GFORTH_FUNCTION		"c-function %{c-name} %{forth-name} %{inputs} -- %{output}"

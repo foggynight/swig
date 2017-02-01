@@ -29,6 +29,7 @@
 /* SwiftForth expects the arguments on the datastack, no type information
    is required, still we need the type information to defer constant types */
 
+#define SWIG_FORTH_SWIFTFORTH_TYPEMAP			"forth"
 #define SWIG_FORTH_SWIFTFORTH_PARAMETER			"%{c-name}"
 #define SWIG_FORTH_SWIFTFORTH_FUNCTION			"FUNCTION: %{c-name} ( %{inputs} -- %{output} )"
 #define SWIG_FORTH_SWIFTFORTH_COMMENT			"\\ %{value}"
