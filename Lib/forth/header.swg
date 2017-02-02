@@ -141,9 +141,9 @@ int main( int argc, char **argv )
 	printf( "\\ This file has been generated using SWIG and fsi,\n"
 		"\\ and is already platform dependent, search for the corresponding\n"
 		"\\ fsi-file to compile it where no one has compiled it before ;)\n"
-		"\\ GForth has its own dynamic loader and doesn't need addional C-Code.\n"
-		"\\ That's why this file contains normal Gforth-code( version 0.6.9 or higher )\n"
-		"\\ and could be used directly with include or require.\n"
+		"\\ Forth systems have their own own dynamic loader and don't need addional C-Code.\n"
+		"\\ That's why this file will just print normal forth-code once compiled\n"
+		"\\ and can be used directly with include or require.\n"
 		"\\ As all comments are stripped during the compilation, please\n"
 		"\\ insert the copyright notice of the original file here.\n"
 	);
