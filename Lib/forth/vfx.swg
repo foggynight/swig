@@ -32,7 +32,7 @@
 #define SWIG_FORTH_VFX_CALLCONV			"\"C\""
 #define SWIG_FORTH_VFX_PARAMETER		"%{type} %{c-name}"
 #define SWIG_FORTH_VFX_PARAMETER_SEPARATOR	", "
-#define SWIG_FORTH_VFX_STRUCT_PARAMETER		"%{type} %{c-name}"
+#define SWIG_FORTH_VFX_STRUCT_PARAMETER		"void *"
 #define SWIG_FORTH_VFX_FUNCTION			"EXTERN: %{calling-convention} %{output} %{c-name}( %{inputs} );"
 #define SWIG_FORTH_VFX_COMMENT			"\\ %{value}"
 #define SWIG_FORTH_VFX_OUTPUT			"%{value}"
