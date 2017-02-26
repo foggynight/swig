@@ -1,8 +1,8 @@
 /*****************************************************************************
 
-	gforth.cxx
+	forth.cxx
 
-	Function:	Gforth extension module for swig
+	Function:	Forth extension module for swig
 
 	Started:	25.02.2008
 	Finished:	x
@@ -16,7 +16,7 @@
 	the Free Software Foundation; either version 3 of the License, or
 	(at your option) any later version.
 
-	Gforth-Swig-Extension is distributed in the hope that it will be useful,
+	Forth-Swig-Extension is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
