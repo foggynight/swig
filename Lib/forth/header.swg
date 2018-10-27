@@ -14,6 +14,18 @@ void swigComment( char *comment )
 	printf( "\\ %s", comment );
 }
 
+/* generic print */
+void swigPrint( char* gforth, char *swiftForth, char *vfx )
+{
+	if( swigTargetSystem == GFORTH )
+		printf( "%s", gforth );
+	else if( swigTargetSystem == SWIFTFORTH )
+		printf( "%s", swiftForth );
+	else if( swigTargetSystem == VFX )
+		printf( "%s", vfx );
+	printf( "\n" );
+}
+
 /* constants */
 void swigIntConstant( long constant, char *name )
 {

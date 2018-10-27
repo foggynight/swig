@@ -99,6 +99,9 @@ class FORTH : public Language
 		void	registerFunptr( Node *node, String *name, SwigType *type, ParmList *parms, SwigType *funtype );
 
 	private:
+		String	*prePostFixSystem( const char *templateName, const char *systemName );
+		void	prePostFix( File *file, const char *templateName );
+
 		void	printNewline( File *file );
 		void	printSectionComment( File *file, const String *section ); 
 		void	printComment( File *file, const char *comment ); 
@@ -128,6 +131,8 @@ class FORTH : public Language
 		File *f_functionPointers;
 		File *f_callbacks;
 		File *f_wrappers;
+
+		File *f_prefix, *f_postfix;
 
 		File *f_include;
 		File *f_enums;
@@ -297,6 +302,8 @@ int FORTH::top( Node *n )
 	f_init = NewString( "" );
 	f_header = NewString( "" );
 	f_footer = NewString( "" );
+	f_prefix = NewString( "" );
+	f_postfix = NewString( "" );
 	f_structs = NewString( "" );
 	f_functionPointers = NewString( "" );
 	f_callbacks = NewString( "" );
@@ -322,11 +329,17 @@ int FORTH::top( Node *n )
 	Swig_register_filebyname( "wrapper", f_wrappers );
 	Swig_register_filebyname( "runtime", f_runtime );
 	Swig_register_filebyname( "init", f_init );
+	Swig_register_filebyname( "prefix", f_prefix );
+	Swig_register_filebyname( "postfix", f_postfix );
 
 	Swig_banner( f_begin );
 
 	/* Emit code for children */
 	Language::top( n );
+
+	/* in-Forth Pre/Postfix */
+	prePostFix( f_prefix,  "PREFIX"  );
+	prePostFix( f_postfix, "POSTFIX" );
 
 	/* Write all to the file */
 
@@ -335,8 +348,10 @@ int FORTH::top( Node *n )
 
 	/* Output module initialization code */
 	Dump( f_header, f_begin );
+
+	/* in-Forth prefix */
+	dumpSection( "PREFIX", f_prefix );
 	
-	/* TODO: ifdefs for constants? */
 	/* constants */
 	dumpSection( "CONSTANTS_INT", f_intConstants );
 
@@ -361,6 +376,9 @@ int FORTH::top( Node *n )
 
 	/* functions */
 	dumpSection( "FUNCTIONS", f_functions );
+
+	/* in-Forth postfix */
+	dumpSection( "POSTFIX", f_postfix );
 
 	/* footer */
 	Dump( f_footer, f_begin );
@@ -917,6 +935,30 @@ int FORTH::functionWrapper(Node *node)
 	functionWrapper( f_functions, name, forthName, parms, node, "FUNCTION", "swigFunction" );
 
 	return SWIG_OK;
+}
+
+/* Prefix / Postfix */
+String	*FORTH::prePostFixSystem( const char *preOrPost, const char *systemName )
+{
+	String	*templateName = NewStringf( "%s_%s", systemName, preOrPost ),
+		*text = templateInstace( Char(templateName), "( none )" );
+
+	Delete( templateName );
+
+	return text;
+}
+
+void	FORTH::prePostFix( File *file, const char *templateName )
+{
+	String	*gforth	    = prePostFixSystem( templateName, "GFORTH" ),
+		*swiftForth = prePostFixSystem( templateName, "SWIFTFORTH" ),
+		*vfx	    = prePostFixSystem( templateName, "VFX" );
+
+	Printf( file, "\n\tswigPrint( \"%s\", \"%s\", \"%s\" );\n", gforth, swiftForth, vfx );
+
+	Delete( vfx );
+	Delete( swiftForth );
+	Delete( gforth );
 }
 
 /* Helper Methods */
