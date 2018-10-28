@@ -37,5 +37,6 @@
 #define SWIG_FORTH_GFORTH_FUNCTION_POINTER	"c-funptr %{forth-name}() {((%{c-funtype})ptr)} %{inputs} -- %{output}"
 #define SWIG_FORTH_GFORTH_CALLBACK		"c-callback %{forth-name}: %{inputs} -- %{output}"
 
+// Attention: include-section is copied by default, see -no-gforth-copy-includes
 #define SWIG_FORTH_GFORTH_PREFIX                "c-library %{module}\\ns\\\" %{library}\\\" add-lib\\n\\\\c #include<%{include}>"
 #define SWIG_FORTH_GFORTH_POSTFIX               "end-c-library"

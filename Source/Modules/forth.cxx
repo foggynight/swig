@@ -41,6 +41,8 @@
 #define FORTH_DEFAULT_VAR_ARG_TYPE "..."
 #define AL(s) s, sizeof(s)
 
+#define END_OF_DEFAULT_INCLUDES "// end-of-default-includes"
+
 static const char *usage = (char *) "\
 Forth Options (available with -forth)\n\
      -notrans-constants    - will not transform the constants ( \"#define FOO_bar 123\" becomes \"FOO_bar constant foo_BAR\" )\n\
@@ -50,8 +52,9 @@ Forth Options (available with -forth)\n\
      -vardefaulttype <type> - specifies the forth-type to be used for varargs (default is " FORTH_DEFAULT_VAR_ARG_TYPE " )\n\
      -forthifyfunctions    - change c-naming-convention into forth-names e.g. getAllStuff becomes get-all-stuff\n\
      -fsi-output           - generates an fsi(platform-independent) instead of an fs file, which needs to be compiled by gcc\n\
-     -no-sectioncomments  - hides section comments in output file\n\
-     -no-callbacks        - disables callback generation\n\
+     -no-sectioncomments   - hides section comments in output file\n\
+     -no-callbacks         - disables callback generation\n\
+     -no-gforth-copy-includes - disable copying include-section into gforth-output preceeded by \\c\n\
      \n\
      Forth Systems:\n\
      -gforth               - generate wrapper to Gforth (default)\n\
@@ -154,6 +157,7 @@ class FORTH : public Language
 		bool	sectionComments;
 		bool	useCallbackStruct;
 		bool	useCallbackTypedef;
+		bool	gforthCopyIncludes;
 		bool	useFunptrStruct;
 		bool	useFunptrTypedef;
 		String	*defaultType;
@@ -176,6 +180,7 @@ void FORTH::main( int argc, char **argv )
 	sectionComments = true;
 	useCallbackStruct = false;
 	useCallbackTypedef = true;
+	gforthCopyIncludes = true;
 	useFunptrStruct = true;
 	useFunptrTypedef = false;
 
@@ -252,6 +257,11 @@ void FORTH::main( int argc, char **argv )
 			{
 				useCallbackStruct = false;
 				useCallbackTypedef = false;
+				Swig_mark_arg(i);
+			}
+			else if( strcmp( argv[i], "-no-gforth-copy-includes" ) == 0 )
+			{
+				gforthCopyIncludes = false;
 				Swig_mark_arg(i);
 			}
 			else if( strcmp( argv[i], "-no-funptrs" ) == 0)
@@ -952,7 +962,51 @@ String	*FORTH::prePostFixSystem( const char *preOrPost, const char *systemName )
 	/* Get the module name */
 	Replace( text, "%{module}",  module,  DOH_REPLACE_ANY );
 	Replace( text, "%{library}", library, DOH_REPLACE_ANY );
-	Replace( text, "%{include}", include, DOH_REPLACE_ANY );
+
+	if( gforthCopyIncludes && !Strcmp( systemName, "GFORTH" ) && !Strcmp( preOrPost, "PREFIX") )
+	{
+		Delete(include);
+		/* get content of include file and cut head */
+		include = NewStringf( "%s", f_include );
+		char *pos = Strstr( include, END_OF_DEFAULT_INCLUDES );
+		int index = pos - Char( include ) + strlen( END_OF_DEFAULT_INCLUDES );
+
+		/* target output */
+		String *includeSection = NewStringEmpty();
+
+		// Skip empty lines and leading spaces
+		const char* includeString = Char(include);
+		while( index < Len( include ) && (includeString[index] == ' ' || includeString[index] == '\n') )
+			index++;
+
+		/* iterate remaining lines */
+		Printf( includeSection, "\\\\c " );
+		char lastC = 0;
+		while( index < Len( include ) )
+		{
+			char c = includeString[index++];
+			if( c == '\n' )
+				;
+			else
+			{
+			    /* only print prefix on non-empty lines */
+			    if( lastC == '\n' )
+				Printf( includeSection, "\\n\\\\c " );
+
+			    if( c == '"' )
+				Printf( includeSection, "\\\"" );
+			    else
+				Printf( includeSection, "%c", c );
+			}
+			lastC = c;
+		}
+
+		/* add to output */
+		Replace( text, "\\\\c #include<%{include}>", includeSection, DOH_REPLACE_ANY );
+		Delete( includeSection );
+	}
+	else
+		Replace( text, "%{include}", include, DOH_REPLACE_ANY );
 
 	Delete( includeDefault );
 	Delete( includeName );
