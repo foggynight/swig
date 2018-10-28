@@ -940,19 +940,21 @@ int FORTH::functionWrapper(Node *node)
 /* Prefix / Postfix */
 String	*FORTH::prePostFixSystem( const char *preOrPost, const char *systemName )
 {
-	String	*templateName = NewStringf( "%s_%s", systemName, preOrPost ),
+	String	*module = Getattr( topNode, "name" ),
+		*templateName = NewStringf( "%s_%s", systemName, preOrPost ),
 		*text = templateInstace( Char(templateName), "( none )" ),
 		*libraryName = NewStringf( "%s_%s", systemName, "LIBRARY" ),
-		*library = templateInstace( Char(libraryName), "( no library )" ),
+		*library = templateInstace( Char(libraryName), Char(module) ),
 		*includeName = NewStringf( "%s_%s", systemName, "INCLUDE" ),
-		*include = templateInstace( Char(includeName), "( no include )" );
+		*includeDefault = NewStringf( "%s.h", module ),
+		*include = templateInstace( Char(includeName), Char(includeDefault) );
 
 	/* Get the module name */
-	String *module = Getattr( topNode, "name" );
 	Replace( text, "%{module}",  module,  DOH_REPLACE_ANY );
 	Replace( text, "%{library}", library, DOH_REPLACE_ANY );
 	Replace( text, "%{include}", include, DOH_REPLACE_ANY );
 
+	Delete( includeDefault );
 	Delete( includeName );
 	Delete( include );
 	Delete( libraryName );
