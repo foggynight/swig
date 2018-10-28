@@ -140,6 +140,8 @@ class FORTH : public Language
 		File *f_functions;
 		File *f_init;
 
+		Node *topNode;
+
 	private:
 		bool	fsiOutput;
 		bool	useStackComments;
@@ -284,9 +286,7 @@ void FORTH::main( int argc, char **argv )
 
 int FORTH::top( Node *n )
 {
-	/* Get the module name */
-	/* currently not needed, create a new vocabulary? */
-	//String *module = Getattr( n, "name" );
+	topNode = n;
 
 	/* Get the output file name */
 	String *outfile = Getattr( n, "outfile" );
@@ -941,8 +941,22 @@ int FORTH::functionWrapper(Node *node)
 String	*FORTH::prePostFixSystem( const char *preOrPost, const char *systemName )
 {
 	String	*templateName = NewStringf( "%s_%s", systemName, preOrPost ),
-		*text = templateInstace( Char(templateName), "( none )" );
+		*text = templateInstace( Char(templateName), "( none )" ),
+		*libraryName = NewStringf( "%s_%s", systemName, "LIBRARY" ),
+		*library = templateInstace( Char(libraryName), "( no library )" ),
+		*includeName = NewStringf( "%s_%s", systemName, "INCLUDE" ),
+		*include = templateInstace( Char(includeName), "( no include )" );
 
+	/* Get the module name */
+	String *module = Getattr( topNode, "name" );
+	Replace( text, "%{module}",  module,  DOH_REPLACE_ANY );
+	Replace( text, "%{library}", library, DOH_REPLACE_ANY );
+	Replace( text, "%{include}", include, DOH_REPLACE_ANY );
+
+	Delete( includeName );
+	Delete( include );
+	Delete( libraryName );
+	Delete( library );
 	Delete( templateName );
 
 	return text;
