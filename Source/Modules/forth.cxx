@@ -54,6 +54,7 @@ Forth Options (available with -forth)\n\
      -fsi-output           - generates an fsi(platform-independent) instead of an fs file, which needs to be compiled by gcc\n\
      -no-sectioncomments   - hides section comments in output file\n\
      -no-callbacks         - disables callback generation\n\
+     -no-pre-postfix       - disable pre-/postfix ouput (in developement, unstable)\n\
      -no-gforth-copy-includes - disable copying include-section into gforth-output preceeded by \\c\n\
      \n\
      Forth Systems:\n\
@@ -151,6 +152,7 @@ class FORTH : public Language
 		bool	useEnumComments;
 		bool	forthifyfunctions;
 		bool	useStructs;
+		bool	usePrePostFix;
 		bool	noConstantsTransformation;
 		bool	wrapFunction;			/* set by functionHandler to prevent swig from generating _set and _get fopr structs and alike */
 		bool	containsVariableArguments;	/* set by typeLookup to handle special output in function wrapper */
@@ -174,6 +176,7 @@ void FORTH::main( int argc, char **argv )
 	useEnumComments = false;
 	forthifyfunctions = false;
 	useStructs = false;
+	usePrePostFix = true;
 	noConstantsTransformation = false;
 	defaultType = NULL;
 	containsVariableArguments = false;
@@ -257,6 +260,11 @@ void FORTH::main( int argc, char **argv )
 			{
 				useCallbackStruct = false;
 				useCallbackTypedef = false;
+				Swig_mark_arg(i);
+			}
+			else if( strcmp( argv[i], "-no-pre-postfix" ) == 0 )
+			{
+				usePrePostFix = false;
 				Swig_mark_arg(i);
 			}
 			else if( strcmp( argv[i], "-no-gforth-copy-includes" ) == 0 )
@@ -360,7 +368,8 @@ int FORTH::top( Node *n )
 	Dump( f_header, f_begin );
 
 	/* in-Forth prefix */
-	dumpSection( "PREFIX", f_prefix );
+	if( usePrePostFix )
+		dumpSection( "PREFIX", f_prefix );
 	
 	/* constants */
 	dumpSection( "CONSTANTS_INT", f_intConstants );
@@ -388,7 +397,8 @@ int FORTH::top( Node *n )
 	dumpSection( "FUNCTIONS", f_functions );
 
 	/* in-Forth postfix */
-	dumpSection( "POSTFIX", f_postfix );
+	if( usePrePostFix )
+		dumpSection( "POSTFIX", f_postfix );
 
 	/* footer */
 	Dump( f_footer, f_begin );
