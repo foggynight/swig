@@ -124,6 +124,9 @@ class FORTH : public Language
 		unsigned long base2dec( String *number, unsigned long base );
 
 		void	dumpHash( Hash *hash );
+		void	addOption( const char* name, ... );
+		bool	setOption( const char* name, bool value );
+
 
 	/* members */
 	protected:
@@ -167,7 +170,34 @@ class FORTH : public Language
 		List	*m_structs;
 		Hash	*m_structFields;
 		Hash	*m_templates;
+		Hash    *m_switches;
 };
+
+void FORTH::addOption( const char* name, ... )
+{
+	List *boolList = NewList();
+	va_list args;
+	va_start( args, name );
+
+	bool *boolSwitch;
+	boolSwitch = va_arg( args, bool * );
+	while( *boolSwitch )
+		Append( boolList, boolSwitch );
+	va_end( args );
+
+	Setattr( m_switches, name, boolList );
+}
+
+bool FORTH::setOption( const char *name, bool value )
+{
+	List *boolList = Getattr( m_switches, name );
+	if( boolList == NULL )
+		return false;
+
+	for (Iterator it = First(boolList); it.item; it= Next(it))
+		*((bool*)it.item) = value;
+	return true;
+}
 
 void FORTH::main( int argc, char **argv )
 {
@@ -186,6 +216,23 @@ void FORTH::main( int argc, char **argv )
 	gforthCopyIncludes = true;
 	useFunptrStruct = true;
 	useFunptrTypedef = false;
+
+	/* TODO: find out why commented addOptions freeze */
+	/* TODO: common prefixes i.e. m_use... */
+	/* TODO: allow optional "no-" */
+	/* TODO: use for options, mark args! */
+	/* TODO: use for SWIG_FORTH_OPTIONS */
+	m_switches = NewList();
+	addOption( "use-structs", &useStructs );
+	addOption( "trans-constants", &noConstantsTransformation ); // TODO: invert meaning
+	addOption( "stackcomments", &useStackComments );
+	addOption( "enumcomments", &useEnumComments );
+	addOption( "forthifyfunctions", &forthifyfunctions );
+	//addOption( "sectioncomments", &sectionComments );
+	addOption( "callbacks", &useCallbackStruct, &useCallbackTypedef );
+	//addOption( "pre-postfix", &usePrePostFix );
+	//addOption( "gforth-copy-includes", &gforthCopyIncludes );
+	//addOption( "funptrs", &useFunptrStruct, &useFunptrTypedef );
 
 	/* treat arguments */
 	for( int i = 1; i < argc; i++ ) 
