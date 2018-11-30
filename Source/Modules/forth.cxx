@@ -569,7 +569,7 @@ int FORTH::constantWrapper(Node *n)
 				useFunptrStruct = false;
 				useFunptrTypedef = false;
 			}
-			if( Strstr( value, "no-pre-postfix" != NULL ) {
+			if( Strstr( value, "no-pre-postfix" ) != NULL ) {
 				usePrePostFix = false;
 			}
 			if( Strstr( value, "forthifyfunctions" ) != NULL )
