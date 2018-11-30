@@ -4,7 +4,7 @@
 
 ## Bernd's requests:
 
-[ ] disable pre-&postfix, like to: `#define SWIG_FORTH_OPTIONS "no-prefix"`
+[x] disable pre-&postfix, like to: `#define SWIG_FORTH_OPTIONS "no-pre-postfix"`
 [ ] case-sensitive vocabulary (CS-VOCABULARY): new default in gforth.swg?
 [ ] prefetch-lib (overwrite default add-library)
     current:
