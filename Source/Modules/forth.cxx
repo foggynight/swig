@@ -636,7 +636,7 @@ int FORTH::enumDeclaration( Node *node )
 
 	if( m_useEnumComments )
 	{
-		String		*comment = NewStringf( "enum %s", name );
+		String		*comment = NewStringf( "enum %s\\n", name );
 		const char	*commentData = (const char *) Data( comment);
 		printComment( f_enums, commentData );
 		Delete( comment );
