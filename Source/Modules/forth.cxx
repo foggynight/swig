@@ -124,7 +124,9 @@ class FORTH : public Language
 		unsigned long base2dec( String *number, unsigned long base );
 
 		void	dumpHash( Hash *hash );
-		void	addOption( const char* name, ... );
+		void	addOption( const char* name, int count, bool **switches );
+		void	addOption( const char* name, bool *switch0 );
+		void	addOption( const char* name, bool* switch0, bool *switch1 );
 		bool	setOption( const char* name, bool value );
 
 
@@ -173,17 +175,23 @@ class FORTH : public Language
 		Hash    *m_switches;
 };
 
-void FORTH::addOption( const char* name, ... )
+void FORTH::addOption( const char* name, bool *switch0 )
+{
+	bool *switches[] = { switch0 };
+	addOption( name, 1, switches );
+}
+
+void FORTH::addOption( const char* name, bool* switch0, bool *switch1 )
+{
+	bool *switches[] = { switch0, switch1 };
+	addOption( name, 2, switches );
+}
+
+void FORTH::addOption( const char* name, int count, bool **switches )
 {
 	List *boolList = NewList();
-	va_list args;
-	va_start( args, name );
-
-	bool *boolSwitch;
-	boolSwitch = va_arg( args, bool * );
-	while( *boolSwitch )
-		Append( boolList, boolSwitch );
-	va_end( args );
+	for( int i = 0; i < count; i++ )
+	    Append( boolList, switches[i] );
 
 	Setattr( m_switches, name, boolList );
 }
@@ -228,11 +236,12 @@ void FORTH::main( int argc, char **argv )
 	addOption( "stackcomments", &useStackComments );
 	addOption( "enumcomments", &useEnumComments );
 	addOption( "forthifyfunctions", &forthifyfunctions );
-	//addOption( "sectioncomments", &sectionComments );
+	addOption( "sectioncomments", &sectionComments );
+	addOption( "sectioncomments", &sectionComments );
 	addOption( "callbacks", &useCallbackStruct, &useCallbackTypedef );
-	//addOption( "pre-postfix", &usePrePostFix );
-	//addOption( "gforth-copy-includes", &gforthCopyIncludes );
-	//addOption( "funptrs", &useFunptrStruct, &useFunptrTypedef );
+	addOption( "pre-postfix", &usePrePostFix );
+	addOption( "gforth-copy-includes", &gforthCopyIncludes );
+	addOption( "funptrs", &useFunptrStruct, &useFunptrTypedef );
 
 	/* treat arguments */
 	for( int i = 1; i < argc; i++ ) 
