@@ -153,20 +153,19 @@ class FORTH : public Language
 
 	private:
 		bool	fsiOutput;
-		bool	useStackComments;
-		bool	useEnumComments;
-		bool	forthifyfunctions;
-		bool	useStructs;
-		bool	usePrePostFix;
-		bool	noConstantsTransformation;
+		bool	m_useStackComments;
+		bool	m_useEnumComments;
+		bool	m_useForthifyFunctions;
+		bool	m_useStructs;
+		bool	m_usePrePostFix;
 		bool	wrapFunction;			/* set by functionHandler to prevent swig from generating _set and _get fopr structs and alike */
 		bool	containsVariableArguments;	/* set by typeLookup to handle special output in function wrapper */
-		bool	sectionComments;
-		bool	useCallbackStruct;
-		bool	useCallbackTypedef;
-		bool	gforthCopyIncludes;
-		bool	useFunptrStruct;
-		bool	useFunptrTypedef;
+		bool	m_useSectionComments;
+		bool	m_useCallbackStruct;
+		bool	m_useCallbackTypedef;
+		bool	m_useGforthCopyIncludes;
+		bool	m_useFunptrStruct;
+		bool	m_useFunptrTypedef;
 		String	*defaultType;
                 String  *defaultVarArgType;
 		List	*m_structs;
@@ -210,38 +209,34 @@ bool FORTH::setOption( const char *name, bool value )
 void FORTH::main( int argc, char **argv )
 {
 	fsiOutput = false;
-	useStackComments = false;
-	useEnumComments = false;
-	forthifyfunctions = false;
-	useStructs = false;
-	usePrePostFix = true;
-	noConstantsTransformation = false;
+	m_useStackComments = false;
+	m_useEnumComments = false;
+	m_useForthifyFunctions = false;
+	m_useStructs = false;
+	m_usePrePostFix = true;
 	defaultType = NULL;
 	containsVariableArguments = false;
-	sectionComments = true;
-	useCallbackStruct = false;
-	useCallbackTypedef = true;
-	gforthCopyIncludes = true;
-	useFunptrStruct = true;
-	useFunptrTypedef = false;
+	m_useSectionComments = true;
+	m_useCallbackStruct = false;
+	m_useCallbackTypedef = true;
+	m_useGforthCopyIncludes = true;
+	m_useFunptrStruct = true;
+	m_useFunptrTypedef = false;
 
-	/* TODO: find out why commented addOptions freeze */
-	/* TODO: common prefixes i.e. m_use... */
 	/* TODO: allow optional "no-" */
 	/* TODO: use for options, mark args! */
 	/* TODO: use for SWIG_FORTH_OPTIONS */
 	m_switches = NewList();
-	addOption( "use-structs", &useStructs );
-	addOption( "trans-constants", &noConstantsTransformation ); // TODO: invert meaning
-	addOption( "stackcomments", &useStackComments );
-	addOption( "enumcomments", &useEnumComments );
-	addOption( "forthifyfunctions", &forthifyfunctions );
-	addOption( "sectioncomments", &sectionComments );
-	addOption( "sectioncomments", &sectionComments );
-	addOption( "callbacks", &useCallbackStruct, &useCallbackTypedef );
-	addOption( "pre-postfix", &usePrePostFix );
-	addOption( "gforth-copy-includes", &gforthCopyIncludes );
-	addOption( "funptrs", &useFunptrStruct, &useFunptrTypedef );
+	addOption( "use-structs",	&m_useStructs );
+	addOption( "stackcomments",	&m_useStackComments );
+	addOption( "enumcomments",	&m_useEnumComments );
+	addOption( "forthifyfunctions", &m_useForthifyFunctions );
+	addOption( "sectioncomments",	&m_useSectionComments );
+	addOption( "callbacks",		&m_useCallbackStruct, &m_useCallbackTypedef );
+	addOption( "pre-postfix",	&m_usePrePostFix );
+	addOption( "gforth-copy-includes", &m_useGforthCopyIncludes );
+	addOption( "funptrs",		&m_useFunptrStruct, &m_useFunptrTypedef );
+	addOption( "funptr-typedef",	&m_useFunptrTypedef );
 
 	/* treat arguments */
 	for( int i = 1; i < argc; i++ ) 
@@ -256,27 +251,22 @@ void FORTH::main( int argc, char **argv )
 			}
 			else if( strcmp( argv[i], "-use-structs" ) == 0)
 			{
-				useStructs = true;
-				Swig_mark_arg(i);
-			}
-			else if( strcmp( argv[i], "-notrans-constants" ) == 0)
-			{
-				noConstantsTransformation = true;
+				m_useStructs = true;
 				Swig_mark_arg(i);
 			}
 			else if( strcmp( argv[i], "-stackcomments" ) == 0)
 			{
-				useStackComments = true;
+				m_useStackComments = true;
 				Swig_mark_arg(i);
 			}
 			else if( strcmp( argv[i], "-enumcomments" ) == 0)
 			{
-				useEnumComments = true;
+				m_useEnumComments = true;
 				Swig_mark_arg(i);
 			}
 			if( strcmp( argv[i], "-forthifyfunctions" ) == 0)
 			{
-				forthifyfunctions = true;
+				m_useForthifyFunctions = true;
 				Swig_mark_arg(i);
 			}
 			else if( strcmp( argv[i], "-defaulttype" ) == 0 )
@@ -309,29 +299,29 @@ void FORTH::main( int argc, char **argv )
 			}
 			else if( strcmp( argv[i], "-no-sectioncomments" ) == 0)
 			{
-				sectionComments = false;
+				m_useSectionComments = false;
 				Swig_mark_arg(i);
 			}
 			else if( strcmp( argv[i], "-no-callbacks" ) == 0)
 			{
-				useCallbackStruct = false;
-				useCallbackTypedef = false;
+				m_useCallbackStruct = false;
+				m_useCallbackTypedef = false;
 				Swig_mark_arg(i);
 			}
 			else if( strcmp( argv[i], "-no-pre-postfix" ) == 0 )
 			{
-				usePrePostFix = false;
+				m_usePrePostFix = false;
 				Swig_mark_arg(i);
 			}
 			else if( strcmp( argv[i], "-no-gforth-copy-includes" ) == 0 )
 			{
-				gforthCopyIncludes = false;
+				m_useGforthCopyIncludes = false;
 				Swig_mark_arg(i);
 			}
 			else if( strcmp( argv[i], "-no-funptrs" ) == 0)
 			{
-				useFunptrStruct = false;
-				useFunptrTypedef = false;
+				m_useFunptrStruct = false;
+				m_useFunptrTypedef = false;
 				Swig_mark_arg(i);
 			}
 		}       
@@ -424,7 +414,7 @@ int FORTH::top( Node *n )
 	Dump( f_header, f_begin );
 
 	/* in-Forth prefix */
-	if( usePrePostFix )
+	if( m_usePrePostFix )
 		dumpSection( "PREFIX", f_prefix );
 	
 	/* constants */
@@ -440,7 +430,7 @@ int FORTH::top( Node *n )
 	dumpSection( "ENUMS", f_enums );
 
 	/* structs */
-	if( useStructs )
+	if( m_useStructs )
 		dumpSection( "STRUCTS", f_structs );
 
 	/* functionPointers */
@@ -453,7 +443,7 @@ int FORTH::top( Node *n )
 	dumpSection( "FUNCTIONS", f_functions );
 
 	/* in-Forth postfix */
-	if( usePrePostFix )
+	if( m_usePrePostFix )
 		dumpSection( "POSTFIX", f_postfix );
 
 	/* footer */
@@ -551,9 +541,9 @@ int FORTH::typedefHandler( Node *node )
 		if(Strstr(type, ",va_list)")) {
 		  Swig_warning(WARN_FORTH_TYPEMAP_UNDEF, input_file, line_number, "va_list in arguments '%s', won't register '%s'\n", type, name);
 		} else {
-		  if(useCallbackTypedef)
+		  if(m_useCallbackTypedef)
 		    registerCallback( node, name, type, parms, type );
-		  if(useFunptrTypedef)
+		  if(m_useFunptrTypedef)
 		    registerFunptr( node, name, type, parms, type );
 		}
 	}
@@ -592,44 +582,44 @@ int FORTH::constantWrapper(Node *n)
 		{
 			/* parse option string */
 			if( Strstr( value, "callback-struct" ) != NULL ) {
-				useCallbackStruct = true;
+				m_useCallbackStruct = true;
 			}
 			if( Strstr( value, "callback-typedef" ) != NULL ) {
-				useCallbackTypedef = true;
+				m_useCallbackTypedef = true;
 			}
 			if( Strstr( value, "funptr-struct" ) != NULL ) {
-				useFunptrStruct = true;
+				m_useFunptrStruct = true;
 			}
 			if( Strstr( value, "funptr-typedef" ) != NULL ) {
-				useFunptrTypedef = true;
+				m_useFunptrTypedef = true;
 			}
 			// matching with no-prefix must come after that
 			// to overwrite wrong detection above
 			if( Strstr( value, "no-callback-struct" ) != NULL ) {
-				useCallbackStruct = false;
+				m_useCallbackStruct = false;
 			}
 			if( Strstr( value, "no-callback-typedef" ) != NULL ) {
-				useCallbackTypedef = false;
+				m_useCallbackTypedef = false;
 			}
 			if( Strstr( value, "no-funptr-struct" ) != NULL ) {
-				useFunptrStruct = false;
+				m_useFunptrStruct = false;
 			}
 			if( Strstr( value, "no-funptr-typedef" ) != NULL ) {
-				useFunptrTypedef = false;
+				m_useFunptrTypedef = false;
 			}
 			if( Strstr( value, "no-callbacks" ) != NULL ) {
-				useCallbackStruct = false;
-				useCallbackTypedef = false;
+				m_useCallbackStruct = false;
+				m_useCallbackTypedef = false;
 			}
 			if( Strstr( value, "no-funptrs" ) != NULL ) {
-				useFunptrStruct = false;
-				useFunptrTypedef = false;
+				m_useFunptrStruct = false;
+				m_useFunptrTypedef = false;
 			}
 			if( Strstr( value, "no-pre-postfix" ) != NULL ) {
-				usePrePostFix = false;
+				m_usePrePostFix = false;
 			}
 			if( Strstr( value, "forthifyfunctions" ) != NULL )
-				forthifyfunctions = true;
+				m_useForthifyFunctions = true;
 		}
 		/* save template in hashtable */
 		else if( Strncmp( name, AL("SWIG_FORTH_")-1) == 0 )
@@ -668,7 +658,7 @@ int FORTH::enumDeclaration( Node *node )
 {
 	String		*name   = Getattr(node,"sym:name");
 
-	if( useEnumComments )
+	if( m_useEnumComments )
 	{
 		String		*comment = NewStringf( "enum %s", name );
 		const char	*commentData = (const char *) Data( comment);
@@ -721,9 +711,9 @@ int FORTH::structMemberWrapper( Node *node )
 	if(Strstr(funtype, ",va_list)")) {
 	  Swig_warning(WARN_FORTH_TYPEMAP_UNDEF, input_file, line_number, "va_list in arguments '%s', don't generate a callback, won't register '%s'\n", funtype, forthName);
 	} else {
-	  if(useCallbackStruct)
+	  if(m_useCallbackStruct)
 	    registerCallback( node, forthName, type, parms, funtype );
-	  if(useFunptrStruct)
+	  if(m_useFunptrStruct)
 	    registerStructFunptr( node, forthName, type, parms, funtype );
 	}
 
@@ -1006,7 +996,7 @@ int FORTH::functionWrapper(Node *node)
 	/* TODO: omit static functions and enums */
 
 	/* glBegin becomes gl-begin ( if enabled ) */
-	if( forthifyfunctions )
+	if( m_useForthifyFunctions )
 		forthName = forthifyName( name );
 	else
 		forthName = name;
@@ -1032,7 +1022,7 @@ String	*FORTH::prePostFixSystem( const char *preOrPost, const char *systemName )
 	Replace( text, "%{module}",  module,  DOH_REPLACE_ANY );
 	Replace( text, "%{library}", library, DOH_REPLACE_ANY );
 
-	if( gforthCopyIncludes && !Strcmp( systemName, "GFORTH" ) && !Strcmp( preOrPost, "PREFIX") )
+	if( m_useGforthCopyIncludes && !Strcmp( systemName, "GFORTH" ) && !Strcmp( preOrPost, "PREFIX") )
 	{
 		Delete(include);
 		/* get content of include file and cut head */
