@@ -68,6 +68,12 @@ Forth Options (available with -forth)\n\
      -enumcomments         - display enum name as comment over the enum-contants\n\
      -stackcomments        - display function-parameter-names in stack-notation over the c-function\n";
 
+/* As DOH Hash and List cannot store a bool-pointer-array, we are using std::map */
+#include <map>
+#include <vector>
+#include <string>
+typedef std::vector<bool*> SwitchMapBoolPointer;
+typedef std::map<std::string, SwitchMapBoolPointer*> SwitchMap;
 
 #define FORTH_DEBUG 0
 
@@ -125,10 +131,11 @@ class FORTH : public Language
 		unsigned long base2dec( String *number, unsigned long base );
 
 		void	dumpHash( Hash *hash );
-		void	addOption( const char* name, int count, bool **switches );
+		void	addOption( const char* name, SwitchMapBoolPointer *switches );
 		void	addOption( const char* name, bool *switch0 );
 		void	addOption( const char* name, bool* switch0, bool *switch1 );
 		bool	setOption( const char* name, bool value );
+		bool	setOption( const char* argument );
 
 
 	/* members */
@@ -172,39 +179,58 @@ class FORTH : public Language
 		List	*m_structs;
 		Hash	*m_structFields;
 		Hash	*m_templates;
-		Hash    *m_switches;
+
+		SwitchMap m_switches;
 };
 
 void FORTH::addOption( const char* name, bool *switch0 )
 {
-	bool *switches[] = { switch0 };
-	addOption( name, 1, switches );
+	SwitchMapBoolPointer *switches = new SwitchMapBoolPointer();
+	switches->push_back( switch0 );
+	addOption( name, switches );
 }
 
 void FORTH::addOption( const char* name, bool* switch0, bool *switch1 )
 {
-	bool *switches[] = { switch0, switch1 };
-	addOption( name, 2, switches );
+	SwitchMapBoolPointer *switches = new SwitchMapBoolPointer();
+	switches->push_back( switch0 );
+	switches->push_back( switch1 );
+	addOption( name, switches );
 }
 
-void FORTH::addOption( const char* name, int count, bool **switches )
+void FORTH::addOption( const char* name, SwitchMapBoolPointer *switches )
 {
-	List *boolList = NewList();
-	for( int i = 0; i < count; i++ )
-	    Append( boolList, switches[i] );
-
-	Setattr( m_switches, name, boolList );
+	m_switches[ name ] = switches;
 }
 
 bool FORTH::setOption( const char *name, bool value )
 {
-	List *boolList = Getattr( m_switches, name );
-	if( boolList == NULL )
+	SwitchMap::iterator it = m_switches.find( name );
+	if( it == m_switches.end() )
 		return false;
 
-	for (Iterator it = First(boolList); it.item; it= Next(it))
-		*((bool*)it.item) = value;
+	SwitchMapBoolPointer *switches = it->second;
+
+	for( SwitchMapBoolPointer::iterator bit = switches->begin(); bit != switches->end(); bit++ )
+	{
+		bool *switchP = *bit;
+		*switchP = value;
+	}
 	return true;
+}
+
+bool FORTH::setOption( const char *argument )
+{
+	if( strncmp( argument, "-no-", 4 ) == 0 )
+	{
+		argument += 4; // skip "-no-"
+		return setOption( argument, false );
+	}
+	else
+	{
+		argument += 1; // skip -
+		return setOption( argument, true );
+	}
 }
 
 void FORTH::main( int argc, char **argv )
@@ -224,10 +250,7 @@ void FORTH::main( int argc, char **argv )
 	m_useFunptrStruct = true;
 	m_useFunptrTypedef = false;
 
-	/* TODO: allow optional "no-" */
-	/* TODO: use for options, mark args! */
 	/* TODO: use for SWIG_FORTH_OPTIONS */
-	m_switches = NewList();
 	addOption( "use-structs",	&m_useStructs );
 	addOption( "stackcomments",	&m_useStackComments );
 	addOption( "enumcomments",	&m_useEnumComments );
@@ -244,24 +267,9 @@ void FORTH::main( int argc, char **argv )
 	{
 		if( argv[i] ) 
 		{
-			if( strcmp( argv[i], "-use-structs" ) == 0)
+			if( setOption( argv[i] ) )
 			{
-				m_useStructs = true;
-				Swig_mark_arg(i);
-			}
-			else if( strcmp( argv[i], "-stackcomments" ) == 0)
-			{
-				m_useStackComments = true;
-				Swig_mark_arg(i);
-			}
-			else if( strcmp( argv[i], "-enumcomments" ) == 0)
-			{
-				m_useEnumComments = true;
-				Swig_mark_arg(i);
-			}
-			if( strcmp( argv[i], "-forthifyfunctions" ) == 0)
-			{
-				m_useForthifyFunctions = true;
+				/* option is a switch */
 				Swig_mark_arg(i);
 			}
 			else if( strcmp( argv[i], "-defaulttype" ) == 0 )
@@ -291,33 +299,6 @@ void FORTH::main( int argc, char **argv )
 			else if( strcmp( argv[i], "-help" ) == 0)
 			{
 				fputs( usage, stderr );
-			}
-			else if( strcmp( argv[i], "-no-sectioncomments" ) == 0)
-			{
-				m_useSectionComments = false;
-				Swig_mark_arg(i);
-			}
-			else if( strcmp( argv[i], "-no-callbacks" ) == 0)
-			{
-				m_useCallbackStruct = false;
-				m_useCallbackTypedef = false;
-				Swig_mark_arg(i);
-			}
-			else if( strcmp( argv[i], "-no-pre-postfix" ) == 0 )
-			{
-				m_usePrePostFix = false;
-				Swig_mark_arg(i);
-			}
-			else if( strcmp( argv[i], "-no-gforth-copy-includes" ) == 0 )
-			{
-				m_useGforthCopyIncludes = false;
-				Swig_mark_arg(i);
-			}
-			else if( strcmp( argv[i], "-no-funptrs" ) == 0)
-			{
-				m_useFunptrStruct = false;
-				m_useFunptrTypedef = false;
-				Swig_mark_arg(i);
 			}
 		}       
 	}

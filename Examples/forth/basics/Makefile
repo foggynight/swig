@@ -2,7 +2,7 @@ TOP        = ../..
 SWIG       = $(TOP)/../preinst-swig
 OUTPUT     = example
 INTERFACE  = example.i
-OPTIONS		= -forth -no-sectioncomments -stackcomments -use-structs
+OPTIONS		= -forth -no-sectioncomments -stackcomments -use-structs -enumcomments
 
 $(OUTPUT).fs: $(OUTPUT).fsx
 	./$(OUTPUT).fsx -gforth > $(OUTPUT).fs
