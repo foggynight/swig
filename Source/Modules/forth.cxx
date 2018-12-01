@@ -45,11 +45,12 @@
 
 static const char *usage = (char *) "\
 Forth Options (available with -forth)\n\
-     -notrans-constants    - will not transform the constants ( \"#define FOO_bar 123\" becomes \"FOO_bar constant foo_BAR\" )\n\
-     -use-structs   - enables structs (expterimental, mostly broken)\n\
-                             on the target platform call 'gcc -E' (headers required)\n\
      -defaulttype <type>   - specifies the forth-type to be used when no typemap was found (default is " FORTH_DEFAULT_TYPE " )\n\
      -vardefaulttype <type> - specifies the forth-type to be used for varargs (default is " FORTH_DEFAULT_VAR_ARG_TYPE " )\n\
+      \n\
+      Switches (can be disabled with -no- prefix i.e. -use-structs vs -no-use-structs\
+     -use-structs   - enables structs (expterimental, mostly broken)\n\
+                             on the target platform call 'gcc -E' (headers required)\n\
      -forthifyfunctions    - change c-naming-convention into forth-names e.g. getAllStuff becomes get-all-stuff\n\
      -fsi-output           - generates an fsi(platform-independent) instead of an fs file, which needs to be compiled by gcc\n\
      -no-sectioncomments   - hides section comments in output file\n\
@@ -243,13 +244,7 @@ void FORTH::main( int argc, char **argv )
 	{
 		if( argv[i] ) 
 		{
-			if( strcmp( argv[i], "-fsi-output" ) == 0)
-			{
-				fsiOutput = true;
-				Preprocessor_define( "SWIGFORTH_FSI 1 ", 0);
-				Swig_mark_arg(i);
-			}
-			else if( strcmp( argv[i], "-use-structs" ) == 0)
+			if( strcmp( argv[i], "-use-structs" ) == 0)
 			{
 				m_useStructs = true;
 				Swig_mark_arg(i);
