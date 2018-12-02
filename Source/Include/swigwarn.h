@@ -314,6 +314,7 @@
 #define WARN_FORTH_ADDING_CRITICAL_TYPE       897
 #define WARN_FORTH_VARIABLE_ARGUMENTS         898
 #define WARN_FORTH_NONTEMPLATE_STRUCT         899
+#define WARN_FORTH_UNKNOWN_OPTION_SWITCH      900
 
 /* please leave 895-899 free for Forth */
 

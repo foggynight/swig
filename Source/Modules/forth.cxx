@@ -221,16 +221,17 @@ bool FORTH::setOption( const char *name, bool value )
 
 bool FORTH::setOption( const char *argument )
 {
-	if( strncmp( argument, "-no-", 4 ) == 0 )
+	// skip starting '-' (optional, as it is not used in SWIG_FORTH_OPTIONS)
+	if( argument[0] == '-' )
+		argument += 1;
+
+	if( strncmp( argument, "no-", 3 ) == 0 )
 	{
-		argument += 4; // skip "-no-"
+		argument += 3; // skip "no-"
 		return setOption( argument, false );
 	}
 	else
-	{
-		argument += 1; // skip -
 		return setOption( argument, true );
-	}
 }
 
 void FORTH::main( int argc, char **argv )
@@ -257,9 +258,12 @@ void FORTH::main( int argc, char **argv )
 	addOption( "forthifyfunctions", &m_useForthifyFunctions );
 	addOption( "sectioncomments",	&m_useSectionComments );
 	addOption( "callbacks",		&m_useCallbackStruct, &m_useCallbackTypedef );
+	addOption( "callback-struct",	& m_useCallbackStruct );
+	addOption( "callback-typedef",	&m_useCallbackTypedef );
 	addOption( "pre-postfix",	&m_usePrePostFix );
 	addOption( "gforth-copy-includes", &m_useGforthCopyIncludes );
 	addOption( "funptrs",		&m_useFunptrStruct, &m_useFunptrTypedef );
+	addOption( "funptr-struct",	&m_useFunptrStruct );
 	addOption( "funptr-typedef",	&m_useFunptrTypedef );
 
 	/* treat arguments */
@@ -556,46 +560,13 @@ int FORTH::constantWrapper(Node *n)
 		/* set module options */
 		if( Strncmp( name, AL("SWIG_FORTH_OPTIONS")) == 0 )
 		{
-			/* parse option string */
-			if( Strstr( value, "callback-struct" ) != NULL ) {
-				m_useCallbackStruct = true;
+			char *arg = strtok( Char(value), " \t" );
+			while( arg != NULL)
+			{
+				if( !setOption( arg ) )
+				    Swig_warning( WARN_FORTH_UNKNOWN_OPTION_SWITCH, input_file, line_number, "Ignoring unknown Forth Switch \"%s\"\n", arg );
+				arg = strtok( NULL, " \t" );
 			}
-			if( Strstr( value, "callback-typedef" ) != NULL ) {
-				m_useCallbackTypedef = true;
-			}
-			if( Strstr( value, "funptr-struct" ) != NULL ) {
-				m_useFunptrStruct = true;
-			}
-			if( Strstr( value, "funptr-typedef" ) != NULL ) {
-				m_useFunptrTypedef = true;
-			}
-			// matching with no-prefix must come after that
-			// to overwrite wrong detection above
-			if( Strstr( value, "no-callback-struct" ) != NULL ) {
-				m_useCallbackStruct = false;
-			}
-			if( Strstr( value, "no-callback-typedef" ) != NULL ) {
-				m_useCallbackTypedef = false;
-			}
-			if( Strstr( value, "no-funptr-struct" ) != NULL ) {
-				m_useFunptrStruct = false;
-			}
-			if( Strstr( value, "no-funptr-typedef" ) != NULL ) {
-				m_useFunptrTypedef = false;
-			}
-			if( Strstr( value, "no-callbacks" ) != NULL ) {
-				m_useCallbackStruct = false;
-				m_useCallbackTypedef = false;
-			}
-			if( Strstr( value, "no-funptrs" ) != NULL ) {
-				m_useFunptrStruct = false;
-				m_useFunptrTypedef = false;
-			}
-			if( Strstr( value, "no-pre-postfix" ) != NULL ) {
-				m_usePrePostFix = false;
-			}
-			if( Strstr( value, "forthifyfunctions" ) != NULL )
-				m_useForthifyFunctions = true;
 		}
 		/* save template in hashtable */
 		else if( Strncmp( name, AL("SWIG_FORTH_")-1) == 0 )
