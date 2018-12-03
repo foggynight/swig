@@ -112,9 +112,10 @@ class FORTH : public Language
 	private:
 		String	*prePostFixSystem( const char *templateName, const char *systemName );
 		void	prePostFix( File *file, const char *templateName );
+                void    printSystem( File *file, const char* systemName, const char *text );
 
 		void	printNewline( File *file );
-		void	printSectionComment( File *file, const String *section ); 
+		void	dumpSectionComment( const String *section );
 		void	printComment( File *file, const char *comment ); 
 		void	printComment( File *file, const String *comment ); 
 
@@ -149,6 +150,8 @@ class FORTH : public Language
 		File *f_callbacks;
 		File *f_wrappers;
 
+                File *f_gforthPrefix, *f_swiftForthPrefix, *f_vfxPrefix;
+                File *f_gforthPostfix, *f_swiftForthPostfix, *f_vfxPostfix;
 		File *f_prefix, *f_postfix;
 
 		File *f_include;
@@ -346,6 +349,12 @@ int FORTH::top( Node *n )
 	f_init = NewString( "" );
 	f_header = NewString( "" );
 	f_footer = NewString( "" );
+	f_gforthPrefix = NewString( "" );
+	f_swiftForthPrefix = NewString( "" );
+	f_vfxPrefix = NewString( "" );
+	f_gforthPostfix = NewString( "" );
+	f_swiftForthPostfix = NewString( "" );
+	f_vfxPostfix = NewString( "" );
 	f_prefix = NewString( "" );
 	f_postfix = NewString( "" );
 	f_structs = NewString( "" );
@@ -373,6 +382,12 @@ int FORTH::top( Node *n )
 	Swig_register_filebyname( "wrapper", f_wrappers );
 	Swig_register_filebyname( "runtime", f_runtime );
 	Swig_register_filebyname( "init", f_init );
+	Swig_register_filebyname( "gforthPrefix " ,f_gforthPrefix );
+	Swig_register_filebyname( "swiftForthPrefix " ,f_swiftForthPrefix );
+	Swig_register_filebyname( "vfxPrefix " ,f_vfxPrefix );
+	Swig_register_filebyname( "gforthPostfix " ,f_gforthPostfix );
+	Swig_register_filebyname( "swiftForthPostfix " ,f_swiftForthPostfix );
+	Swig_register_filebyname( "vfxPostfix " ,f_vfxPostfix );
 	Swig_register_filebyname( "prefix", f_prefix );
 	Swig_register_filebyname( "postfix", f_postfix );
 
@@ -395,7 +410,12 @@ int FORTH::top( Node *n )
 
 	/* in-Forth prefix */
 	if( m_usePrePostFix )
-		dumpSection( "PREFIX", f_prefix );
+	{
+		dumpSectionComment( "PREFIX" );
+		dumpSection( NULL, f_gforthPrefix );
+		dumpSection( NULL, f_swiftForthPrefix );
+		dumpSection( NULL, f_vfxPrefix );
+	}
 	
 	/* constants */
 	dumpSection( "CONSTANTS_INT", f_intConstants );
@@ -424,7 +444,12 @@ int FORTH::top( Node *n )
 
 	/* in-Forth postfix */
 	if( m_usePrePostFix )
-		dumpSection( "POSTFIX", f_postfix );
+	{
+		dumpSectionComment( "POSTFIX" );
+		dumpSection( NULL, f_gforthPostfix );
+		dumpSection( NULL, f_swiftForthPostfix );
+		dumpSection( NULL, f_vfxPostfix );
+	}
 
 	/* footer */
 	Dump( f_footer, f_begin );
@@ -433,6 +458,12 @@ int FORTH::top( Node *n )
 	Wrapper_pretty_print( f_init, f_begin );
 
 	/* Cleanup files */
+	Delete( f_gforthPrefix );
+	Delete( f_swiftForthPrefix );
+	Delete( f_vfxPrefix );
+	Delete( f_gforthPostfix );
+	Delete( f_swiftForthPostfix );
+	Delete( f_vfxPostfix );
 	Delete( m_structs );
 	Delete( f_header );
 	Delete( f_footer );
@@ -452,9 +483,10 @@ int FORTH::top( Node *n )
 void FORTH::dumpSection( const char* sectionName, File *sectionFile )
 {
 	/* only print section if it has actial content */
-	if( Len( sectionFile ) > 0 )
+	if( Len( sectionFile ) > 0 || sectionName == NULL )
 	{
-		printSectionComment( f_begin, sectionName );
+		if( sectionName != NULL )
+			dumpSectionComment( sectionName );
 		Dump( sectionFile, f_begin );
 	}
 }
@@ -1037,19 +1069,29 @@ void	FORTH::prePostFix( File *file, const char *templateName )
 	Delete( gforth );
 }
 
+void    FORTH::printSystem( File *file, const char* systemName, const char *text )
+{
+        char *line = strtok( Char(text), "\n" );
+        while( line != NULL)
+	{
+                Printf( file, "\n\tswigPrintSystem( %s, \"%s\" );\n", systemName, line );
+                line = strtok( NULL, "\n" );
+        }
+}
+
 /* Helper Methods */
 void	FORTH::printNewline( File *file )
 {
 	Printf( file, "\n\tswigNewline();\n" );
 }
 
-void	FORTH::printSectionComment( File *file, const String *section )
+void	FORTH::dumpSectionComment( const String *section )
 {
 	String *sectionName = NewStringf( "SECTION_%s", section ),
 	       *comment = (String*) Getattr(m_templates, sectionName );
 
-	printNewline( file );
-	printComment( file, comment );
+	printNewline( f_begin );
+	printComment( f_begin, comment );
 
 	Delete( sectionName );
 }

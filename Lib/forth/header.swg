@@ -25,6 +25,11 @@ void swigPrint( char* gforth, char *swiftForth, char *vfx )
 		printf( "%s", vfx );
 	printf( "\n" );
 }
+void swigPrintSystem( SwigTargetSystem targetSystem, char *text )
+{
+	if( targetSystem == swigTargetSystem )
+	    printf( "%s\n", text );
+}
 
 /* constants */
 void swigIntConstant( long constant, char *name )
