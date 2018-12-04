@@ -112,7 +112,8 @@ class FORTH : public Language
 	private:
 		String	*prePostFixSystem( const char *templateName, const char *systemName );
 		void	prePostFix( File *file, const char *templateName );
-                void    printSystem( File *file, const char* systemName, const char *text );
+                void    printSystem( File *file, const char* systemName, String *line );
+                void    dumpSystem( File *dest, const char *systemName, File *src );
 
 		void	printNewline( File *file );
 		void	dumpSectionComment( const String *section );
@@ -368,6 +369,12 @@ int FORTH::top( Node *n )
 	f_floatConstants = NewString( "" );
 	f_stringConstants = NewString( "" );
 	f_functions = NewString( "" );
+	f_gforthPrefix = NewString( "" );
+	f_swiftForthPrefix = NewString( "" );
+	f_vfxPrefix = NewString( "" );
+	f_gforthPostfix = NewString( "" );
+	f_swiftForthPostfix = NewString( "" );
+	f_vfxPostfix = NewString( "" );
 	m_structFields = NewHash();
 	m_structs = NewList();
 
@@ -382,12 +389,12 @@ int FORTH::top( Node *n )
 	Swig_register_filebyname( "wrapper", f_wrappers );
 	Swig_register_filebyname( "runtime", f_runtime );
 	Swig_register_filebyname( "init", f_init );
-	Swig_register_filebyname( "gforthPrefix " ,f_gforthPrefix );
-	Swig_register_filebyname( "swiftForthPrefix " ,f_swiftForthPrefix );
-	Swig_register_filebyname( "vfxPrefix " ,f_vfxPrefix );
-	Swig_register_filebyname( "gforthPostfix " ,f_gforthPostfix );
-	Swig_register_filebyname( "swiftForthPostfix " ,f_swiftForthPostfix );
-	Swig_register_filebyname( "vfxPostfix " ,f_vfxPostfix );
+	Swig_register_filebyname( "gforthPrefix" ,f_gforthPrefix );
+	Swig_register_filebyname( "swiftForthPrefix" ,f_swiftForthPrefix );
+	Swig_register_filebyname( "vfxPrefix" ,f_vfxPrefix );
+	Swig_register_filebyname( "gforthPostfix" ,f_gforthPostfix );
+	Swig_register_filebyname( "swiftForthPostfix" ,f_swiftForthPostfix );
+	Swig_register_filebyname( "vfxPostfix" ,f_vfxPostfix );
 	Swig_register_filebyname( "prefix", f_prefix );
 	Swig_register_filebyname( "postfix", f_postfix );
 
@@ -411,10 +418,10 @@ int FORTH::top( Node *n )
 	/* in-Forth prefix */
 	if( m_usePrePostFix )
 	{
-		dumpSectionComment( "PREFIX" );
-		dumpSection( NULL, f_gforthPrefix );
-		dumpSection( NULL, f_swiftForthPrefix );
-		dumpSection( NULL, f_vfxPrefix );
+		dumpSystem( f_prefix, "GFORTH", f_gforthPrefix );
+		dumpSystem( f_prefix, "SWIFTFORTH", f_swiftForthPrefix );
+		dumpSystem( f_prefix, "VFX", f_vfxPrefix );
+		dumpSection( "PREFIX", f_prefix );
 	}
 	
 	/* constants */
@@ -445,10 +452,10 @@ int FORTH::top( Node *n )
 	/* in-Forth postfix */
 	if( m_usePrePostFix )
 	{
-		dumpSectionComment( "POSTFIX" );
-		dumpSection( NULL, f_gforthPostfix );
-		dumpSection( NULL, f_swiftForthPostfix );
-		dumpSection( NULL, f_vfxPostfix );
+                dumpSystem( f_postfix, "GFORTH", f_gforthPostfix );
+		dumpSystem( f_postfix, "SWIFTFORTH", f_swiftForthPostfix );
+		dumpSystem( f_postfix, "VFX", f_vfxPostfix );
+		dumpSection( "POSTFIX", f_postfix );
 	}
 
 	/* footer */
@@ -483,10 +490,9 @@ int FORTH::top( Node *n )
 void FORTH::dumpSection( const char* sectionName, File *sectionFile )
 {
 	/* only print section if it has actial content */
-	if( Len( sectionFile ) > 0 || sectionName == NULL )
+	if( Len( sectionFile ) > 0 )
 	{
-		if( sectionName != NULL )
-			dumpSectionComment( sectionName );
+                dumpSectionComment( sectionName );
 		Dump( sectionFile, f_begin );
 	}
 }
@@ -1069,14 +1075,34 @@ void	FORTH::prePostFix( File *file, const char *templateName )
 	Delete( gforth );
 }
 
-void    FORTH::printSystem( File *file, const char* systemName, const char *text )
+void    FORTH::printSystem( File *file, const char* systemName, String *line )
 {
-        char *line = strtok( Char(text), "\n" );
-        while( line != NULL)
+
+	Replace( line, "\\", "\\\\", DOH_REPLACE_ANY );
+	Replace( line, "\"", "\\\"", DOH_REPLACE_ANY );
+	Printf( file, "\n\tswigPrintSystem( %s, \"%s\" );", systemName, line );
+}
+
+void    FORTH::dumpSystem( File *dest, const char *systemName, File *src )
+{
+	String *line = NewStringEmpty();
+	char buffer[] = { 0, 0 };
+
+	Seek( src, 0, SEEK_SET );
+	while( Read( src, buffer, 1 ) != 0 )
 	{
-                Printf( file, "\n\tswigPrintSystem( %s, \"%s\" );\n", systemName, line );
-                line = strtok( NULL, "\n" );
-        }
+		if( buffer[0] == '\n' )
+		{
+			printSystem( dest, systemName, line );
+			Delete( line );
+			line = NewStringEmpty();
+		}
+		else
+			Putc( buffer[0], line );
+	}
+
+	if( Len( line ) > 0 )
+		printSystem( dest, systemName, line );
 }
 
 /* Helper Methods */
