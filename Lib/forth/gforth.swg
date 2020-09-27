@@ -40,3 +40,5 @@
 // Attention: include-section is copied by default, see -no-gforth-copy-includes
 #define SWIG_FORTH_GFORTH_PREFIX                "c-library %{module}\\ns\\\" %{library}\\\" add-lib\\n\\\\c #include<%{include}>"
 #define SWIG_FORTH_GFORTH_POSTFIX               "end-c-library"
+
+#define SWIG_FORTH_GFORTH_DEFAULT_TYPE		"n"

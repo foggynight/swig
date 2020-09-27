@@ -37,3 +37,4 @@
 #define SWIG_FORTH_VFX_COMMENT			"\\ %{value}"
 #define SWIG_FORTH_VFX_OUTPUT			"%{value}"
 
+#define SWIG_FORTH_VFX_DEFAULT_TYPE		"long"

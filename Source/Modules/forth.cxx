@@ -120,8 +120,8 @@ class FORTH : public Language
 		void	printComment( File *file, const char *comment ); 
 		void	printComment( File *file, const String *comment ); 
 
-		String	*ParmList_str_forthargs( ParmList *node, const char *attr_name, String *typeTamplate = NULL, String *structTemplate = NULL, const char *separator = " ", const char *typemapName = "forth" );
-		String	*typeLookup( Node *node, String *typeTemplate = NULL, String *structTemplate = NULL, const char *typemapName = "forth" );
+		String	*ParmList_str_forthargs( ParmList *node, const char *attr_name, const char *prefix = NULL, String *typeTamplate = NULL, String *structTemplate = NULL, const char *separator = " ", const char *typemapName = "forth" );
+		String	*typeLookup( Node *node, const char *prefix = NULL, String *typeTemplate = NULL, String *structTemplate = NULL, const char *typemapName = "forth" );
 		String	*forthifyName( String *name );
 		String	*templateInstace( const char *name, const char *defaultValue = "" );
 
@@ -297,7 +297,7 @@ void FORTH::main( int argc, char **argv )
 				if( i + 1 < argc && argv[i+1] )
 				{
 					defaultVarArgType = NewString("");
-					Printf( defaultType, argv[i+1] );
+					Printf( defaultVarArgType, argv[i+1] );
 					Swig_mark_arg( i );
 					Swig_mark_arg( ++i );
 				}
@@ -919,8 +919,8 @@ String *FORTH::functionWrapper(String *name, String *forthName, Node *type, Parm
 		*typemapName = templateInstace( Char( typemapNameTemplate ) ),
 		*separatorTemplate = NewStringf( "%s_PARAMETER_SEPARATOR", prefix ),
 		*separator = templateInstace( Char( separatorTemplate ), " " ),
-		*returnType = typeLookup( type, NULL, NULL, Char( typemapName ) ),
-                *parmstr = ParmList_str_forthargs( parms, "type", parameterType, structParameter, Char( separator ), Char( typemapName ) ),
+		*returnType = typeLookup( type, prefix, NULL, NULL, Char( typemapName ) ),
+                *parmstr = ParmList_str_forthargs( parms, "type", prefix, parameterType, structParameter, Char( separator ), Char( typemapName ) ),
 		*declaration = templateInstace( Char(functionTemplate) );
 
 	Replace( declaration, "%{c-name}", name, DOH_REPLACE_ANY );
@@ -1132,7 +1132,7 @@ void	FORTH::printComment( File *file, const String *comment )
 	Printf( file, "\n\tswigComment(\"%s\");\n", comment );
 }
 
-String *FORTH::ParmList_str_forthargs( ParmList *node, const char *attr_name, String *typeTemplate, String *structTemplate, const char *separator, const char *typemapName )
+String *FORTH::ParmList_str_forthargs( ParmList *node, const char *attr_name, const char *prefix, String *typeTemplate, String *structTemplate, const char *separator, const char *typemapName )
 {
 	String *out = NewStringEmpty();
 	while( node )
@@ -1141,7 +1141,7 @@ String *FORTH::ParmList_str_forthargs( ParmList *node, const char *attr_name, St
 		
 		/* if type is requested, perform a lookup */
 		if(!strncmp(attr_name, "type", 4)) {
-			type = typeLookup( node, typeTemplate, structTemplate, typemapName );
+			type = typeLookup( node, prefix, typeTemplate, structTemplate, typemapName );
                 }
 		else
 		{
@@ -1166,12 +1166,14 @@ String *FORTH::ParmList_str_forthargs( ParmList *node, const char *attr_name, St
 	return out;
 }
 
-String *FORTH::typeLookup( Node *node, String *typeTemplate, String *structTemplate, const char *typemapName )
+String *FORTH::typeLookup( Node *node, const char *prefix, String *typeTemplate, String *structTemplate, const char *typemapName )
 {
 	String		*typeName;
 	String		*resultType = NewString("");
 	String		*cName		= Getattr( node, "name" );
 	String		*cTypeName	= SwigType_str( Getattr( node, "type" ) , 0);
+	String		*defaultTypeTemplate	= NewStringf( "%s_DEFAULT_TYPE", prefix );
+	String		*defaultTypeString	= NewString( defaultType );
 	bool		foundType;
 
 	/* Get return types */
@@ -1207,10 +1209,14 @@ String *FORTH::typeLookup( Node *node, String *typeTemplate, String *structTempl
 		}
 		else
 		{
+			if( prefix != NULL ) {
+				Delete( defaultTypeString );
+				defaultTypeString = NewString( (String*) Getattr(m_templates, defaultTypeTemplate) );
+			}
 
 			/* Type not found, emit default-type and display warning */
-			Swig_warning( WARN_FORTH_TYPEMAP_UNDEF, input_file, line_number, "No forth typemap defined for \"%s\", using \"%s\"\n", cTypeName, defaultType );
-			typeName = NewStringf( "%s", (char *)Data(defaultType) );
+			Swig_warning( WARN_FORTH_TYPEMAP_UNDEF, input_file, line_number, "No forth typemap (prefix: '%s') defined for \"%s\", using \"%s\"\n", prefix, cTypeName, defaultTypeString );
+			typeName = NewStringf( "%s", (char *)Data(defaultTypeString) );
 		}
 	}
 
@@ -1226,6 +1232,8 @@ String *FORTH::typeLookup( Node *node, String *typeTemplate, String *structTempl
 
 	Delete( typeName );
 	Delete( cTypeName );
+	Delete( defaultTypeString );
+	Delete( defaultTypeTemplate );
 
 	return resultType;
 }

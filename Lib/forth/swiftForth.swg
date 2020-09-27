@@ -35,3 +35,4 @@
 #define SWIG_FORTH_SWIFTFORTH_COMMENT			"\\ %{value}"
 #define SWIG_FORTH_SWIFTFORTH_OUTPUT			"%{value}"
 
+#define SWIG_FORTH_SWIFTFORTH_DEFAULT_TYPE		"n"
