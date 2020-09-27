@@ -509,12 +509,12 @@ int FORTH::constructorDeclaration( Node *n )
 
 	/* starter-comment & begin */
 	String *comment = templateInstace( "STRUCT_COMMENT" );
-	Replace( comment, "%{c-name}", name, DOH_REPLACE_ANY );
+	Replace( comment, "%{c-name}", cName, DOH_REPLACE_ANY );
 	Replace( comment, "%{forth-name}", name, DOH_REPLACE_ANY );
 	printComment( f_structs, comment );
 
 	String *begin = templateInstace( "STRUCT_BEGIN" );
-	Replace( begin, "%{c-name}", name, DOH_REPLACE_ANY );
+	Replace( begin, "%{c-name}", cName, DOH_REPLACE_ANY );
 	Replace( begin, "%{forth-name}", name, DOH_REPLACE_ANY );
 	Printf( f_structs, "\tprintf( %s );\n", begin );
 
