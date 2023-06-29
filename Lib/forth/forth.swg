@@ -27,19 +27,19 @@
  *****************************************************************************/
 
 /* Primitive types */
-%typemap(forth) bool,			const bool &			"n"
-%typemap(forth) char,			const char &			"u"
-%typemap(forth) signed char,		const signed char &		"n"
-%typemap(forth) unsigned char,		const unsigned char &		"u"
-%typemap(forth) short,			const short &			"n"
-%typemap(forth) unsigned short,		const unsigned short &		"u"
-%typemap(forth) wchar_t,		const wchar_t &			"n"
-%typemap(forth) int,			const int &			"n"
-%typemap(forth) unsigned int,		const unsigned int &		"u"
-%typemap(forth) long,			const long &			"n"
-%typemap(forth) unsigned long,		const unsigned long &		"u"
-%typemap(forth) long long,		const long long &		"d"
-%typemap(forth) unsigned long long,	const unsigned long long &	"ud"
+// %typemap(forth) bool,			const bool &			"n"
+// %typemap(forth) char,			const char &			"u"
+// %typemap(forth) signed char,		const signed char &		"n"
+// %typemap(forth) unsigned char,		const unsigned char &		"u"
+// %typemap(forth) short,			const short &			"n"
+// %typemap(forth) unsigned short,		const unsigned short &		"u"
+// %typemap(forth) wchar_t,		const wchar_t &			"n"
+// %typemap(forth) int,			const int &			"n"
+// %typemap(forth) unsigned int,		const unsigned int &		"u"
+// %typemap(forth) long,			const long &			"n"
+// %typemap(forth) unsigned long,		const unsigned long &		"u"
+// %typemap(forth) long long,		const long long &		"d"
+// %typemap(forth) unsigned long long,	const unsigned long long &	"ud"
 %typemap(forth) float,			const float &			"r"
 %typemap(forth) double,			const double &			"r"
 %typemap(forth) long double,		const long double &		"r"
@@ -47,10 +47,12 @@
 
 /* instead of creatiung a typemap for every pointer and array e.g.:
 	%typemap(forth) char *, char[ANY], char[]			"a"
-   all pointers are mapped to "a" (see documentation 10.3.3)	
+   all pointers are mapped to "a" (see documentation 10.3.3)
  */
-%typemap(forth) const char *, const char[ANY], const char[]		"s"
-%typemap(forth) const wchar_t *, const wchar_t[ANY], const wchar_t[]    "ws"
+// %typemap(forth) const char *, const char[ANY], const char[]		"s"
+%typemap(forth) const char *, const char[ANY], const char[]		"a"
+// %typemap(forth) const wchar_t *, const wchar_t[ANY], const wchar_t[]    "ws"
+%typemap(forth) const wchar_t *, const wchar_t[ANY], const wchar_t[]    "a"
 %typemap(forth) SWIGTYPE *						"a"
 %typemap(forth) SWIGTYPE []						"a"
 
@@ -75,4 +77,3 @@
 %insert("header") "header.swg"
 
 %insert("footer") "footer.swg"
-
